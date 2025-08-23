@@ -31,7 +31,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define addrEPP 0x50<<1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -67,6 +67,34 @@ void I2C_Scan(void) {
         }
 
     }
+}
+void Mem_Add(uint16_t memadd,uint8_t *data, uint8_t size){
+	uint8_t ad[2];
+	ad[0] = memadd>>8 & 0xFF;
+	ad[1] = memadd& 0xFF;
+	HAL_I2C_Master_Transmit(&hi2c1, addrEPP, ad, 2, 100);
+	HAL_I2C_Master_Transmit(&hi2c1, addrEPP, data, size, 100);
+	HAL_Delay(10);
+}
+void Mem_read(uint16_t memadd,uint8_t *data, uint8_t size){
+	uint8_t mess_ok[]="Date done \r\n";
+	uint8_t trans_ok[]="Transmit done \r\n";
+	uint8_t ad[2];
+	ad[0] = memadd>>8 & 0xFF ;
+	ad[1] = memadd& 0xFF;
+	if(HAL_I2C_Master_Transmit(&hi2c1, addrEPP, ad, 2, 100)==HAL_OK){
+		HAL_UART_Transmit(&huart1, trans_ok, sizeof(trans_ok)-1, 100);
+	}
+	HAL_Delay(20);
+
+
+	    // Чтение данных
+	if(HAL_I2C_Master_Receive(&hi2c1, addrEPP | 0x01, data, size, 100)==HAL_OK){
+		HAL_UART_Transmit(&huart1, mess_ok, sizeof(mess_ok)-1, 100);
+	}
+
+
+
 }
 /* USER CODE END PFP */
 
@@ -112,12 +140,18 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t txt[]="START I2C";
+
+
+  uint8_t txt[] = "Aloe";
+  Mem_Add(0x1000, txt, sizeof(txt)-1);
+  uint8_t Read_data[sizeof(txt)-1] = {0};
 
   while (1)
   {
     /* USER CODE END WHILE */
-	  I2C_Scan();
+
+	 Mem_read(0x1000, Read_data, sizeof(Read_data)-1);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
